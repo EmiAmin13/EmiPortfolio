@@ -272,7 +272,7 @@ summary {
 
 /* flying icon clone + sparkles injected by flyToProjects */
 .fly-clone {
-  position: fixed;
+  position: absolute;
   z-index: 90;
   display: grid;
   place-items: center;
@@ -281,7 +281,7 @@ summary {
   will-change: transform;
 }
 .fly-spark {
-  position: fixed;
+  position: absolute;
   z-index: 89;
   width: 7px;
   height: 7px;
