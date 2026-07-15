@@ -167,8 +167,11 @@ export default function TechOrbit() {
               type="button"
               onMouseEnter={() => onChipEnter(tech.id)}
               onFocus={() => onChipEnter(tech.id)}
-              onClick={() => onChipEnter(tech.id)}
-              aria-label={tech.label}
+              onClick={(e) => {
+                onChipEnter(tech.id)
+                launch(tech.id, e.currentTarget)
+              }}
+              aria-label={`Ver proyectos con ${tech.label}`}
               className="absolute left-0 top-0 grid h-12 w-12 place-items-center rounded-xl border bg-surface/70 backdrop-blur-sm transition-colors"
               style={{
                 color: isSel ? tech.color : 'var(--muted)',

@@ -46,8 +46,9 @@ function makeClone(originEl: HTMLElement, color: string, at: Point): HTMLElement
   clone.style.background = 'var(--surface)'
   clone.style.border = `1px solid ${color}`
   clone.style.boxShadow = `0 0 22px -4px ${color}`
-  clone.style.transform = 'translate(-50%, -50%)'
   document.body.appendChild(clone)
+  // gsap owns the transform; keep it centered on the point while x/y animate
+  gsap.set(clone, { xPercent: -50, yPercent: -50 })
   return clone
 }
 
@@ -90,15 +91,21 @@ function lightCard(projectId: string, techId: TechId, color: string) {
   }, 1800)
 }
 
+/** Center of an element in DOCUMENT space (scroll-invariant). */
 function centerOf(el: Element): Point {
   const r = el.getBoundingClientRect()
-  return { x: r.left + r.width / 2, y: r.top + r.height / 2 }
+  return {
+    x: r.left + r.width / 2 + window.scrollX,
+    y: r.top + r.height / 2 + window.scrollY,
+  }
 }
 
 /**
- * Fly a tech icon from the orbit center to every project card that uses it.
- * The clone(s) travel together to a shared midpoint (reads as one icon),
- * then fan out to each card, lighting it up with the tech's brand color.
+ * Fly a tech icon from its origin (orbit center or an orbiting chip) to
+ * every project card that uses it. Everything is computed in document
+ * coordinates and the clones are absolutely positioned, so the flight
+ * stays glued to the page while it smooth-scrolls to the projects — no
+ * drift if the user scrolls mid-animation.
  */
 export function flyTechToProjects(techId: TechId, originEl: HTMLElement) {
   const projectIds = PROJECTS_BY_TECH[techId] ?? []
@@ -116,57 +123,59 @@ export function flyTechToProjects(techId: TechId, originEl: HTMLElement) {
   const start = centerOf(originEl)
   const clones = projectIds.map(() => makeClone(originEl, color, start))
 
-  const section = document.getElementById('proyectos')
-  section?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  document
+    .getElementById('proyectos')
+    ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
-  window.setTimeout(() => {
-    const targets: Point[] = projectIds.map((id) => {
-      const card = document.getElementById(`project-${id}`)
-      return card ? centerOf(card) : start
-    })
-    const mid: Point = {
-      x: targets.reduce((s, t) => s + t.x, 0) / targets.length,
-      y: targets.reduce((s, t) => s + t.y, 0) / targets.length - 40,
-    }
+  // document coords → stable regardless of the ongoing smooth scroll
+  const targets: Point[] = projectIds.map((id) => {
+    const card = document.getElementById(`project-${id}`)
+    return card ? centerOf(card) : start
+  })
+  const mid: Point = {
+    x: targets.reduce((s, t) => s + t.x, 0) / targets.length,
+    y: targets.reduce((s, t) => s + t.y, 0) / targets.length - 40,
+  }
 
-    const tl = gsap.timeline()
-    clones.forEach((c) => {
-      tl.to(
-        c,
-        {
-          x: mid.x - start.x,
-          y: mid.y - start.y,
-          scale: 0.85,
-          duration: 0.5,
-          ease: 'power2.in',
+  const tl = gsap.timeline({ delay: 0.08 })
+  // leg 1: all clones converge to a shared midpoint (reads as one icon)
+  clones.forEach((c) => {
+    tl.to(
+      c,
+      {
+        x: mid.x - start.x,
+        y: mid.y - start.y,
+        scale: 0.85,
+        duration: 0.5,
+        ease: 'power2.in',
+      },
+      0,
+    )
+  })
+  // leg 2: fan out to each card, lighting it up on arrival
+  clones.forEach((c, i) => {
+    const t = targets[i]
+    tl.to(
+      c,
+      {
+        x: t.x - start.x,
+        y: t.y - start.y,
+        scale: 1.1,
+        duration: 0.55,
+        ease: 'power2.out',
+        onComplete: () => {
+          lightCard(projectIds[i], techId, color)
+          sparkle(t, color)
+          gsap.to(c, {
+            opacity: 0,
+            scale: 0.4,
+            duration: 0.3,
+            delay: 0.05,
+            onComplete: () => c.remove(),
+          })
         },
-        0,
-      )
-    })
-    clones.forEach((c, i) => {
-      const t = targets[i]
-      tl.to(
-        c,
-        {
-          x: t.x - start.x,
-          y: t.y - start.y,
-          scale: 1.1,
-          duration: 0.55,
-          ease: 'power2.out',
-          onComplete: () => {
-            lightCard(projectIds[i], techId, color)
-            sparkle(t, color)
-            gsap.to(c, {
-              opacity: 0,
-              scale: 0.4,
-              duration: 0.3,
-              delay: 0.05,
-              onComplete: () => c.remove(),
-            })
-          },
-        },
-        0.5,
-      )
-    })
-  }, 520)
+      },
+      0.5,
+    )
+  })
 }
