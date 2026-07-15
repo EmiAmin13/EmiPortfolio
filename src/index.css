@@ -1,0 +1,300 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ *
+ * Design tokens — Tailwind v4 maps utilities to runtime CSS vars,
+ * so `bg-bg`, `text-fg`, `border-border`, `font-display`… all follow
+ * the active `data-theme`.
+ * ------------------------------------------------------------------ */
+@theme inline {
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
+
+  --color-bg: var(--bg);
+  --color-chrome: var(--chrome);
+  --color-surface: var(--surface);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-border: var(--border);
+  --color-glow-a: var(--glow-a);
+  --color-glow-b: var(--glow-b);
+}
+
+/* ---- Night (default) — sober ink, life = neon ---- */
+:root,
+:root[data-theme="night"] {
+  color-scheme: dark;
+  --bg: #1c2231;
+  --chrome: #12161f;
+  --surface: #28303f;
+  --fg: #f7efed;
+  --muted: #ded2cf;
+  --faint: #aca1a1;
+  --border: #69656f;
+  --glow-a: #29ed22;
+  --glow-b: #0047ab;
+  /* full live palette read by JS (cursor trail + hover fx) */
+  --live-1: #29ed22;
+  --live-2: #b5f725;
+  --live-3: #060147;
+  --live-4: #0047ab;
+}
+
+/* ---- Day — sober paper, life = crimson/coral ---- */
+:root[data-theme="day"] {
+  color-scheme: light;
+  --bg: #ece1dc;
+  --chrome: #ddd0ca;
+  --surface: #fffdfc;
+  --fg: #293249;
+  --muted: #69656f;
+  --faint: #aca1a1;
+  --border: #d8ccc9;
+  --glow-a: #6e0921;
+  --glow-b: #ff7e70;
+  --live-1: #6e0921;
+  --live-2: #ff7e70;
+  --live-3: #6e0921;
+  --live-4: #ff7e70;
+}
+
+/* ------------------------------------------------------------------ *
+ * Section-driven background morph — useSectionSpy stamps
+ * data-section on <html>; the body's background transition does the
+ * crossfade. Each section gets its own neighboring tone per theme.
+ * ------------------------------------------------------------------ */
+:root[data-theme="night"][data-section="skills"] {
+  --bg: #1f2a45;
+}
+:root[data-theme="night"][data-section="proyectos"] {
+  --bg: #141a2a;
+}
+:root[data-theme="night"][data-section="contacto"] {
+  --bg: #0e1119;
+}
+:root[data-theme="day"][data-section="skills"] {
+  --bg: #e7d7ce;
+}
+:root[data-theme="day"][data-section="proyectos"] {
+  --bg: #ded2cf;
+}
+:root[data-theme="day"][data-section="contacto"] {
+  --bg: #cfc0ba;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.6s ease, color 0.6s ease;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--glow-b);
+  color: var(--bg);
+}
+
+/* thin sober scrollbar — blooms with the live colors under the mouse */
+::-webkit-scrollbar {
+  width: 9px;
+}
+::-webkit-scrollbar-track {
+  background: var(--chrome);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+  border: 2px solid var(--chrome);
+  transition: background 0.2s ease;
+}
+::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, var(--glow-a), var(--glow-b));
+}
+
+/* mono eyebrow / section label */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+button,
+a,
+[role='button'],
+summary {
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------------ *
+ * Hover "comes alive" utilities — sober until touched, then the
+ * theme's live accents bloom in. Only box-shadow / text-shadow /
+ * transform animate (compositor-friendly).
+ * ------------------------------------------------------------------ */
+.glow {
+  transition: box-shadow 0.28s ease, transform 0.28s ease,
+    border-color 0.28s ease, color 0.28s ease;
+}
+.glow:hover,
+.glow:focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--glow-a);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--glow-a) 60%, transparent),
+    0 0 18px -4px var(--glow-b), 0 0 40px -10px var(--glow-a);
+  outline: none;
+}
+
+.glow-text {
+  transition: text-shadow 0.3s ease, color 0.3s ease;
+}
+.glow-text:hover,
+.glow-text:focus-visible {
+  color: var(--glow-a);
+  text-shadow: 0 0 16px color-mix(in srgb, var(--glow-a) 80%, transparent),
+    0 0 30px color-mix(in srgb, var(--glow-b) 60%, transparent);
+  outline: none;
+}
+
+/* keyboard focus fallback for anything not using .glow */
+:focus-visible {
+  outline: 2px solid var(--glow-a);
+  outline-offset: 3px;
+}
+
+/* logo mark — playful tilt + live-color bloom on hover */
+.logo-fx {
+  overflow: visible;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), filter 0.3s ease;
+  will-change: transform, filter;
+}
+.group:hover .logo-fx,
+.logo-fx:hover {
+  transform: rotate(-8deg) scale(1.12);
+  filter: drop-shadow(0 0 6px var(--glow-a))
+    drop-shadow(0 0 14px var(--glow-b));
+}
+
+/* animated conic ring for signature elements */
+@keyframes ring-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Section divider — infinite marquee ribbon. Two identical halves;
+ * translating -50% loops seamlessly. Pauses on hover so items can
+ * light up under the cursor. Reduced-motion kills the animation via
+ * the global media query (ribbon just sits still).
+ * ------------------------------------------------------------------ */
+.marquee {
+  overflow: hidden;
+  user-select: none;
+  white-space: nowrap;
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll var(--marquee-dur, 36s) linear infinite;
+}
+.marquee[data-reverse="true"] .marquee-track {
+  animation-direction: reverse;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marquee-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* project card lit up by the orbit choreography (--hl = tech brand color) */
+.project-card {
+  --hl: var(--glow-a);
+}
+.project-card.card-highlight {
+  border-color: var(--hl);
+  box-shadow: 0 0 0 2px var(--hl), 0 0 46px -6px var(--hl);
+}
+.tech-chip.chip-lit {
+  color: var(--hl);
+  border-color: var(--hl);
+  box-shadow: 0 0 14px -4px var(--hl);
+}
+
+/* flying icon clone + sparkles injected by flyToProjects */
+.fly-clone {
+  position: fixed;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  border-radius: 10px;
+  will-change: transform;
+}
+.fly-spark {
+  position: fixed;
+  z-index: 89;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.emi-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  z-index: 120;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+/* barber-pole indeterminate loading bar (polaroid caption on hover) */
+@keyframes barber {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 40px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

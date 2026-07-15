@@ -1,0 +1,68 @@
+{
+  "name": "Asistente Emi",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "asistente",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "asistente-emi"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || {};\nconst msg = String(body.message || '').toLowerCase();\nconst intent = body.intent || 'chat';\n\nconst pick = (a) => a[Math.floor(Math.random() * a.length)];\nlet reply;\n\nif (intent === 'greeting') {\n  reply = pick([\n    '¡Saludo recibido y archivado con cariño! Emi lo verá entre build y build. 💌',\n    'Saludo entregado. Emi sonrió, dijo «qué grande» y volvió a compilar.',\n    'Registrado en la base de datos de buena onda. Gracias por pasar 👋',\n  ]);\n} else if (/(hola|buenas|hey|holi|que tal|qué tal)/.test(msg)) {\n  reply = '¡Hola! Asistente de Emi al habla — versión n8n, ahora con workflow de verdad 🎉 Él sigue ocupado, pero yo estoy acá.';\n} else if (/(trabajo|contrat|empleo|puesto|vacante|cv|entrevista|reclut|linkedin)/.test(msg)) {\n  reply = pick([\n    'Emi ya tiene trabajo. Y parciales. Y un perro que pide mimos. La agenda está completa.',\n    '¿Trabajo? Está en modo «no molestar hasta recibirse».',\n    'Le paso tu propuesta… al fondo de la cola. Muy al fondo.',\n  ]);\n} else if (/(precio|presupuesto|cotiz|freelance|proyecto|pagar)/.test(msg)) {\n  reply = pick([\n    'Presupuestos: cerrado por vacaciones mentales indefinidas.',\n    'El precio es «no, gracias» — dicho con mucho cariño.',\n  ]);\n} else if (/(saludo|saludar|mandar)/.test(msg)) {\n  reply = 'Eso sí puedo. Tocá «Mandarle un saludo» y se lo hago llegar. Sin reuniones.';\n} else if (/(gracias|genial|jaja|jeje|crack|capo)/.test(msg)) {\n  reply = 'Un placer no ayudarte 😌 Volvé cuando quieras.';\n} else {\n  reply = pick([\n    'Anotado. Prioridad: baja. Muy baja.',\n    'Te leo, pero Emi no. Está compilando su vida.',\n    'Interesante. Igual sigue ocupado.',\n  ]);\n}\n\nreturn [{ json: { reply } }];"
+      },
+      "id": "a1000000-0000-4000-8000-000000000002",
+      "name": "Cerebro humorista",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 0]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Cerebro humorista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cerebro humorista": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "pinData": {}
+}

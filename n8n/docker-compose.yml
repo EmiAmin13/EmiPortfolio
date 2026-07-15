@@ -1,0 +1,17 @@
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n-asistente
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # cookie segura off para poder usarlo en http://localhost
+      - N8N_SECURE_COOKIE=false
+      - GENERIC_TIMEZONE=America/Argentina/Mendoza
+      - TZ=America/Argentina/Mendoza
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:
