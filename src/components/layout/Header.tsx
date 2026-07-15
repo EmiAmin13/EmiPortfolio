@@ -70,8 +70,8 @@ export default function Header() {
                 <a
                   key={item.id}
                   href={`#${item.id}`}
-                  className={`relative rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors duration-300 ${
-                    isActive ? 'text-fg' : 'text-muted hover:text-fg'
+                  className={`nav-glow relative rounded-full px-3.5 py-1.5 text-sm font-medium ${
+                    isActive ? 'text-fg' : 'text-muted'
                   }`}
                 >
                   {isActive && (
@@ -79,6 +79,10 @@ export default function Header() {
                       layoutId="nav-indicator"
                       transition={{ type: 'spring', stiffness: 380, damping: 32 }}
                       className="absolute inset-0 rounded-full border border-border/70 bg-surface"
+                      style={{
+                        boxShadow:
+                          '0 0 14px -5px var(--glow-a), inset 0 0 8px -6px var(--glow-b)',
+                      }}
                     />
                   )}
                   <span className="relative z-10">{item.label}</span>

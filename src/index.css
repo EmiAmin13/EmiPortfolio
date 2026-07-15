@@ -200,31 +200,60 @@ summary {
 }
 
 /* ------------------------------------------------------------------ *
- * Section divider — infinite marquee ribbon. Two identical halves;
- * translating -50% loops seamlessly. Pauses on hover so items can
- * light up under the cursor. Reduced-motion kills the animation via
- * the global media query (ribbon just sits still).
+ * Section divider — draggable marquee ribbon. JS drives the offset
+ * (drag + inertia); two identical halves make the loop seamless.
+ * When flung fast, the whole ribbon heats up with the live colors.
  * ------------------------------------------------------------------ */
 .marquee {
   overflow: hidden;
   user-select: none;
   white-space: nowrap;
+  cursor: grab;
+  touch-action: pan-y;
+}
+.marquee:active {
+  cursor: grabbing;
 }
 .marquee-track {
   display: flex;
   width: max-content;
-  animation: marquee-scroll var(--marquee-dur, 36s) linear infinite;
+  will-change: transform;
 }
-.marquee[data-reverse="true"] .marquee-track {
-  animation-direction: reverse;
+
+/* navbar links — bloom with the live accent under the mouse */
+.nav-glow {
+  transition: color 0.25s ease, background-color 0.25s ease,
+    box-shadow 0.25s ease;
 }
-.marquee:hover .marquee-track {
-  animation-play-state: paused;
+.nav-glow:hover,
+.nav-glow:focus-visible {
+  color: var(--glow-a);
+  background: color-mix(in srgb, var(--glow-a) 10%, transparent);
+  box-shadow: 0 0 16px -6px var(--glow-b);
+  outline: none;
 }
-@keyframes marquee-scroll {
-  to {
-    transform: translateX(-50%);
-  }
+
+/* footer social buttons — brand color bloom, readable in both themes */
+.social-btn {
+  transition: color 0.25s ease, border-color 0.25s ease,
+    box-shadow 0.25s ease, transform 0.25s ease;
+}
+.social-btn:hover,
+.social-btn:focus-visible {
+  transform: translateY(-2px);
+  outline: none;
+}
+.social-ig:hover,
+.social-ig:focus-visible {
+  color: #e4405f;
+  border-color: #e4405f;
+  box-shadow: 0 0 18px -6px #e4405f;
+}
+.social-gh:hover,
+.social-gh:focus-visible {
+  color: var(--fg);
+  border-color: var(--fg);
+  box-shadow: 0 0 18px -6px var(--fg);
 }
 
 /* project card lit up by the orbit choreography (--hl = tech brand color) */

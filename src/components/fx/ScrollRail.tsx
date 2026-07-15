@@ -67,10 +67,12 @@ export default function ScrollRail() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 6 }}
                     transition={{ duration: 0.18 }}
-                    className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 whitespace-nowrap font-mono text-[10px] tracking-wider"
-                    style={{ color: isHovered ? stopColor : 'var(--faint)' }}
+                    className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-border/60 bg-chrome/90 px-2.5 py-1 font-mono text-[11px] tracking-wider shadow-lg backdrop-blur-sm"
                   >
-                    [{stop.n}] {isHovered ? stop.label : ''}
+                    <span style={{ color: stopColor }}>[{stop.n}]</span>
+                    {isHovered && (
+                      <span className="ml-1.5 text-fg">{stop.label}</span>
+                    )}
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -85,11 +87,13 @@ export default function ScrollRail() {
                 onMouseEnter={() => setHovered(stop.id)}
                 onMouseLeave={() => setHovered(null)}
                 aria-label={`Ir a ${stop.label}`}
-                className="relative z-10 block h-3 w-3 rounded-full border"
+                className="relative z-10 block h-3 w-3 rounded-full border-2"
                 animate={{
                   scale: isHovered ? 1.7 : isActive ? 1.35 : 1,
                   backgroundColor: isActive ? stopColor : 'var(--bg)',
-                  borderColor: isActive || isHovered ? stopColor : 'var(--border)',
+                  // inactive rings stay clearly outlined
+                  borderColor:
+                    isActive || isHovered ? stopColor : 'var(--faint)',
                   boxShadow: isActive
                     ? `0 0 10px ${stopColor}`
                     : isHovered
