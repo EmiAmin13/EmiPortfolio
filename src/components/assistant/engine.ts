@@ -42,6 +42,9 @@ export function botReply(input: string): string {
 export const GREETING_SENT =
   'Saludo enviado. (Bueno… casi: todavía no conecté el n8n de verdad, pero la intención ya viaja.)'
 
+export const LEAD_SENT =
+  'Datos anotados. (En modo demo no viajan a ningún lado todavía, pero cuando el n8n esté conectado, AMN te contacta.)'
+
 /* ------------------------------------------------------------------ *
  * Live transport — if VITE_N8N_WEBHOOK_URL is configured, messages go
  * to the n8n workflow; any failure (offline, timeout, bad shape)
@@ -52,7 +55,33 @@ const WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL as string | undefined
 /** Whether a live n8n webhook is configured for this build. */
 export const HAS_WEBHOOK = Boolean(WEBHOOK_URL)
 
-export type Intent = 'chat' | 'greeting'
+export type Intent = 'chat' | 'greeting' | 'lead'
+
+/** Datos que junta el flujo guiado de saludo antes de enviarlo a n8n. */
+export interface GreetingData {
+  nombre: string
+  apellido: string
+  mensaje: string
+}
+
+/** Qué es el proyecto. */
+export type TipoProyecto = 'landing' | 'ecommerce' | 'sistema_a_medida'
+/** Cuánto esfuerzo/detalle lleva. */
+export type NivelProyecto = 'basico' | 'intermedio' | 'full'
+
+/** Datos que junta el flujo guiado de interesado en un proyecto. */
+export interface LeadData {
+  tipo: TipoProyecto
+  nivel: NivelProyecto
+  nombre: string
+  apellido: string
+  contacto: string
+  /** Sólo lo pone el botón "Acepto" — nunca se infiere de texto libre. */
+  avisoAceptado: boolean
+  resumen?: string
+}
+
+export type AssistantData = GreetingData | LeadData
 
 export interface AssistantResult {
   reply: string
@@ -64,6 +93,7 @@ export async function sendToAssistant(
   text: string,
   sessionId: string,
   intent: Intent = 'chat',
+  data?: AssistantData,
 ): Promise<AssistantResult> {
   if (WEBHOOK_URL) {
     try {
@@ -72,7 +102,7 @@ export async function sendToAssistant(
       const res = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, sessionId, intent }),
+        body: JSON.stringify({ message: text, sessionId, intent, data }),
         signal: ctrl.signal,
       })
       clearTimeout(timer)
@@ -86,7 +116,12 @@ export async function sendToAssistant(
     }
   }
   return {
-    reply: intent === 'greeting' ? GREETING_SENT : botReply(text),
+    reply:
+      intent === 'greeting'
+        ? GREETING_SENT
+        : intent === 'lead'
+          ? LEAD_SENT
+          : botReply(text),
     live: false,
   }
 }

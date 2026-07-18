@@ -10,33 +10,286 @@
           "allowedOrigins": "*"
         }
       },
-      "id": "a1000000-0000-4000-8000-000000000001",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 0],
+      "position": [
+        0,
+        300
+      ],
       "webhookId": "asistente-emi"
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json.body || {};\nconst msg = String(body.message || '').toLowerCase();\nconst intent = body.intent || 'chat';\n\nconst pick = (a) => a[Math.floor(Math.random() * a.length)];\nlet reply;\n\nif (intent === 'greeting') {\n  reply = pick([\n    '¡Saludo recibido y archivado con cariño! Emi lo verá entre build y build. 💌',\n    'Saludo entregado. Emi sonrió, dijo «qué grande» y volvió a compilar.',\n    'Registrado en la base de datos de buena onda. Gracias por pasar 👋',\n  ]);\n} else if (/(hola|buenas|hey|holi|que tal|qué tal)/.test(msg)) {\n  reply = '¡Hola! Asistente de Emi al habla — versión n8n, ahora con workflow de verdad 🎉 Él sigue ocupado, pero yo estoy acá.';\n} else if (/(trabajo|contrat|empleo|puesto|vacante|cv|entrevista|reclut|linkedin)/.test(msg)) {\n  reply = pick([\n    'Emi ya tiene trabajo. Y parciales. Y un perro que pide mimos. La agenda está completa.',\n    '¿Trabajo? Está en modo «no molestar hasta recibirse».',\n    'Le paso tu propuesta… al fondo de la cola. Muy al fondo.',\n  ]);\n} else if (/(precio|presupuesto|cotiz|freelance|proyecto|pagar)/.test(msg)) {\n  reply = pick([\n    'Presupuestos: cerrado por vacaciones mentales indefinidas.',\n    'El precio es «no, gracias» — dicho con mucho cariño.',\n  ]);\n} else if (/(saludo|saludar|mandar)/.test(msg)) {\n  reply = 'Eso sí puedo. Tocá «Mandarle un saludo» y se lo hago llegar. Sin reuniones.';\n} else if (/(gracias|genial|jaja|jeje|crack|capo)/.test(msg)) {\n  reply = 'Un placer no ayudarte 😌 Volvé cuando quieras.';\n} else {\n  reply = pick([\n    'Anotado. Prioridad: baja. Muy baja.',\n    'Te leo, pero Emi no. Está compilando su vida.',\n    'Interesante. Igual sigue ocupado.',\n  ]);\n}\n\nreturn [{ json: { reply } }];"
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.intent }}",
+                    "rightValue": "greeting",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "outputKey": "greeting"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "typeValidation": "loose"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.intent }}",
+                    "rightValue": "lead",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "outputKey": "lead"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "chat"
+        }
       },
-      "id": "a1000000-0000-4000-8000-000000000002",
-      "name": "Cerebro humorista",
+      "name": "Ruta por intent",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $json.body || {};\nconst d = b.data || {};\nreturn [{ json: {\n  nombre: d.nombre || null,\n  apellido: d.apellido || null,\n  mensajeOriginal: d.mensaje || b.message || null\n} }];"
+      },
+      "name": "Preparar saludo",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [220, 0]
+      "position": [
+        520,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.callmebot.com/whatsapp.php",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "phone",
+              "value": "__TU_TELEFONO__"
+            },
+            {
+              "name": "apikey",
+              "value": "__TU_APIKEY_CALLMEBOT__"
+            },
+            {
+              "name": "text",
+              "value": "={{ 'Nuevo saludo en el portfolio de ' + ($('Preparar saludo').item.json.nombre || '?') + ' ' + ($('Preparar saludo').item.json.apellido || '') + ': ' + ($('Preparar saludo').item.json.mensajeOriginal || '') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "WhatsApp a Emi",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        740,
+        60
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { reply: 'Â¡Saludo entregado! Emi lo recibe en su WhatsApp entre build y build. ðŸ’Œ' } }];"
+      },
+      "name": "Respuesta saludo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        60
+      ]
     },
     {
       "parameters": {
         "respondWith": "firstIncomingItem",
         "options": {}
       },
-      "id": "a1000000-0000-4000-8000-000000000003",
-      "name": "Respond to Webhook",
+      "name": "Responder saludo",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [440, 0]
+      "position": [
+        1400,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.body.data.avisoAceptado }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Â¿Consentimiento?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        520,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $json.body || {};\nconst d = b.data || {};\nreturn [{ json: {\n  tipoProyecto: d.tipo || null,\n  nivelProyecto: d.nivel || null,\n  nombre: d.nombre || null,\n  apellido: d.apellido || null,\n  contacto: d.contacto || null,\n  mensajeOriginal: b.message || null,\n  resumen: d.resumen || `${d.tipo || 'proyecto'} nivel ${d.nivel || '?'}`,\n  avisoDerivacionAceptado: true\n} }];"
+      },
+      "name": "Preparar prospecto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8081/api/v1/prospectos/ingesta",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "dev-prospectos-key-cambiar"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "name": "Guardar prospecto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        220
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('Â¿Consentimiento?').item.json.body.data || {};\nreturn [{ json: { reply: `Â¡Listo, ${d.nombre || ''}! Tus datos quedaron registrados. AMN te contacta a ${d.contacto || 'tu contacto'} a la brevedad. ðŸ™Œ` } }];"
+      },
+      "name": "Respuesta lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {}
+      },
+      "name": "Responder lead",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1400,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { reply: 'Sin problema. Necesito que aceptes el aviso de derivaciÃ³n para poder pasar tus datos a AMN. Si cambiÃ¡s de idea, acÃ¡ estoy. ðŸ™‚' } }];"
+      },
+      "name": "Respuesta sin consentimiento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {}
+      },
+      "name": "Responder sin consentimiento",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        960,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || {};\nconst msg = String(body.message || '').toLowerCase();\nconst pick = (a) => a[Math.floor(Math.random() * a.length)];\nlet reply;\nif (/(hola|buenas|hey|holi|que tal|quÃ© tal)/.test(msg)) {\n  reply = 'Â¡Hola! Asistente de Emi al habla. Ã‰l estÃ¡ ocupado compilando su vida, pero yo estoy acÃ¡. PodÃ©s dejarle un saludo o contarme si buscÃ¡s una web. ðŸ™‚';\n} else if (/(trabajo|contrat|empleo|puesto|vacante|cv|entrevista|reclut|linkedin)/.test(msg)) {\n  reply = pick(['Emi ya tiene trabajo, estudios y un perro. La agenda estÃ¡ completa.', 'Â¿Trabajo? EstÃ¡ en modo no molestar hasta recibirse.']);\n} else if (/(precio|presupuesto|cotiz|freelance|pagar|cuanto|cuÃ¡nto)/.test(msg)) {\n  reply = 'De precios y plazos se encarga AMN. Si querÃ©s, te tomo los datos y te contactan. TocÃ¡ la opciÃ³n de proyecto. ðŸ˜‰';\n} else if (/(gracias|genial|jaja|jeje|crack|capo)/.test(msg)) {\n  reply = 'Un placer ðŸ˜Œ VolvÃ© cuando quieras.';\n} else {\n  reply = pick(['Contame: Â¿venÃ­s a saludar o buscÃ¡s una web/sistema?', 'Te leo. Â¿Un saludo para Emi o un proyecto en mente?']);\n}\nreturn [{ json: { reply } }];"
+      },
+      "name": "Cerebro humorista",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {}
+      },
+      "name": "Responder chat",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        740,
+        620
+      ]
     }
   ],
   "connections": {
@@ -44,7 +297,127 @@
       "main": [
         [
           {
+            "node": "Ruta por intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ruta por intent": {
+      "main": [
+        [
+          {
+            "node": "Preparar saludo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Â¿Consentimiento?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "Cerebro humorista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar saludo": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp a Emi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp a Emi": {
+      "main": [
+        [
+          {
+            "node": "Respuesta saludo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respuesta saludo": {
+      "main": [
+        [
+          {
+            "node": "Responder saludo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Â¿Consentimiento?": {
+      "main": [
+        [
+          {
+            "node": "Preparar prospecto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respuesta sin consentimiento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar prospecto": {
+      "main": [
+        [
+          {
+            "node": "Guardar prospecto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar prospecto": {
+      "main": [
+        [
+          {
+            "node": "Respuesta lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respuesta lead": {
+      "main": [
+        [
+          {
+            "node": "Responder lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respuesta sin consentimiento": {
+      "main": [
+        [
+          {
+            "node": "Responder sin consentimiento",
             "type": "main",
             "index": 0
           }
@@ -55,7 +428,7 @@
       "main": [
         [
           {
-            "node": "Respond to Webhook",
+            "node": "Responder chat",
             "type": "main",
             "index": 0
           }
@@ -63,6 +436,8 @@
       ]
     }
   },
-  "settings": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
   "pinData": {}
 }

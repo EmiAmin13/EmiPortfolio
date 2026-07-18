@@ -17,7 +17,7 @@ export interface Project {
 export const PROJECTS: Project[] = [
   {
     id: 'flora',
-    title: 'FloraStudio · Landing Page',
+    title: 'FloraStudio · Landing Page · Demo',
     tagline: 'Arquitectura + paisajismo · Mendoza',
     description:
       'Landing de estudio de arquitectura y paisajismo. Hero editorial, tipografía con carácter y foco en el bienestar de los espacios. Construida a mano, ligera y rápida.',
