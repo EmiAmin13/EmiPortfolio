@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 5173
+    },
+    {
+      "name": "gestion-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "C:/Proyectos/GestionAMN/frontend", "start"],
+      "port": 4200
     }
   ]
 }
