@@ -256,6 +256,28 @@ summary {
   box-shadow: 0 0 18px -6px var(--fg);
 }
 
+/* "no projects with this tech" feedback. Animates only border/shadow —
+ * never transform — because the orbit's rAF loop owns each chip's
+ * transform and would fight a transform-based shake. */
+@keyframes tech-nope {
+  0% {
+    border-color: var(--border);
+    box-shadow: 0 0 0 0 transparent;
+  }
+  25%,
+  65% {
+    border-color: #b5303f;
+    box-shadow: 0 0 0 2px #b5303f, 0 0 20px -4px #b5303f;
+  }
+  100% {
+    border-color: var(--border);
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+.tech-nope {
+  animation: tech-nope 0.55s ease-out;
+}
+
 /* project card lit up by the orbit choreography (--hl = tech brand color) */
 .project-card {
   --hl: var(--glow-a);

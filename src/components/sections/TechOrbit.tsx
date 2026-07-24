@@ -63,9 +63,21 @@ export default function TechOrbit() {
       running = false
       cancelAnimationFrame(raf)
     }
-    // only spin while the orbit is on-screen (perf + lets the page settle)
+    // only spin while the orbit is on-screen (perf + lets the page settle).
+    // Leaving the viewport also releases any pinned selection: a click
+    // scrolls the page away without ever firing mouseleave, which used to
+    // strand one tech frozen in the center.
     const io = new IntersectionObserver(
-      ([entry]) => (entry.isIntersecting ? start() : stop()),
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          start()
+        } else {
+          stop()
+          window.clearTimeout(leaveTimer.current)
+          pausedRef.current = false
+          setSelected(null)
+        }
+      },
       { threshold: 0.05 },
     )
     io.observe(container)
@@ -90,7 +102,16 @@ export default function TechOrbit() {
   const onContainerEnterCancel = () => window.clearTimeout(leaveTimer.current)
 
   const launch = (id: TechId, el: HTMLElement | null) => {
-    if (el) flyTechToProjects(id, el)
+    if (!el) return
+    // no projects → keep the hover state, the chip just flashes
+    if (!flyTechToProjects(id, el)) return
+    // release the wheel once the icon is on its way, so it never stays
+    // frozen on the tech that was just clicked
+    window.clearTimeout(leaveTimer.current)
+    leaveTimer.current = window.setTimeout(() => {
+      pausedRef.current = false
+      setSelected(null)
+    }, 700)
   }
 
   const SelectedIcon = selected ? TECH_MAP[selected].icon : null

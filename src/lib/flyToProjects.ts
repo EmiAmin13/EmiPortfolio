@@ -106,18 +106,27 @@ function centerOf(el: Element): Point {
  * coordinates and the clones are absolutely positioned, so the flight
  * stays glued to the page while it smooth-scrolls to the projects — no
  * drift if the user scrolls mid-animation.
+ *
+ * Returns true when a flight actually launched, false when the tech has
+ * no projects yet (caller can keep its hover state in that case).
  */
-export function flyTechToProjects(techId: TechId, originEl: HTMLElement) {
+export function flyTechToProjects(
+  techId: TechId,
+  originEl: HTMLElement,
+): boolean {
   const projectIds = PROJECTS_BY_TECH[techId] ?? []
   const color = highlightColor(TECH_MAP[techId].color)
 
   if (projectIds.length === 0) {
-    gsap.to(originEl, {
-      keyframes: [{ x: -6 }, { x: 6 }, { x: -4 }, { x: 0 }],
-      duration: 0.4,
-    })
+    // Border/shadow flash only: orbit chips have their transform rewritten
+    // every frame by the orbit's rAF loop, so a transform-based shake here
+    // fights that loop and makes the chip jump sideways.
+    originEl.classList.remove('tech-nope')
+    void originEl.offsetWidth // reflow so the animation can restart
+    originEl.classList.add('tech-nope')
+    window.setTimeout(() => originEl.classList.remove('tech-nope'), 600)
     toast('Sin proyectos con esta tech… todavía')
-    return
+    return false
   }
 
   const start = centerOf(originEl)
@@ -178,4 +187,6 @@ export function flyTechToProjects(techId: TechId, originEl: HTMLElement) {
       0.5,
     )
   })
+
+  return true
 }
